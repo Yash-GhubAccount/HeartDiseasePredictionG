@@ -1,0 +1,10 @@
+flask
+flask_cors
+joblib
+pandas
+scikit-learn
+xgboost
+numpy
+Flask-SQLAlchemy
+Flask-Bcrypt
+Flask-JWT-Extended
