@@ -98,9 +98,8 @@ def login():
     password = data.get('password')
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.check_password_hash(user.password_hash, password):
-        # This identity object is what causes the "Subject must be a string" error
-        identity = {'user_id': user.id, 'role': user.role}
-        access_token = create_access_token(identity=identity)
+        # Correctly cast the user ID to a string for the JWT identity.
+        access_token = create_access_token(identity=str(user.id))
         return jsonify(access_token=access_token, userRole=user.role), 200
     return jsonify({"message": "Invalid credentials"}), 401
 
@@ -123,11 +122,22 @@ def predict():
     if not all([lr_pipeline, xgb_pipeline, thresholds]):
         return jsonify({"error": "ML models are not loaded. Server setup is incomplete."}), 500
     try:
-        current_user_identity = get_jwt_identity()
-        user_id = current_user_identity['user_id']
+        user_id = int(get_jwt_identity())
         
         json_data = request.get_json()
+
+        # FIX: Manually map binary string features to integers before prediction.
+        binary_map = {"Yes": 1, "No": 0, "Male": 1, "Female": 0}
+        binary_cols = [
+            "Exercise", "Smoking_History", "Diabetes", "Depression",
+            "Arthritis", "Skin_Cancer", "Other_Cancer", "Sex"
+        ]
+        for col in binary_cols:
+            if col in json_data and isinstance(json_data[col], str):
+                json_data[col] = binary_map.get(json_data[col])
+
         input_df = pd.DataFrame([json_data])
+        
         probs_lr = lr_pipeline.predict_proba(input_df)[:, 1]
         probs_xgb = xgb_pipeline.predict_proba(input_df)[:, 1]
         weighted_avg_prob = (0.3 * probs_lr) + (0.7 * probs_xgb)
@@ -135,9 +145,11 @@ def predict():
         prediction_value = (weighted_avg_prob >= threshold).astype(int)[0]
         prediction_result = "Yes" if prediction_value == 1 else "No"
         probability_score = weighted_avg_prob[0]
-        recommendation_list = generate_recommendations(json_data, prediction_result)
+        
+        # Pass the original string data to recommendations, not the mapped data
+        recommendation_list = generate_recommendations(request.get_json(), prediction_result)
 
-        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(json_data))
+        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(request.get_json()))
         db.session.add(new_prediction)
         db.session.commit()
 
@@ -148,7 +160,27 @@ def predict():
         }
         return jsonify(response)
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        # Provide a more informative error message for debugging
+        print(f"Prediction Error: {e}")
+        return jsonify({'error': f"An error occurred during prediction: {e}"}), 400
+
+@app.route("/api/history", methods=["GET"])
+@jwt_required()
+def get_history():
+    try:
+        user_id = int(get_jwt_identity())
+        predictions = Prediction.query.filter_by(user_id=user_id).order_by(Prediction.timestamp.desc()).all()
+        history_list = []
+        for p in predictions:
+            history_list.append({
+                'id': p.id,
+                'result': p.result,
+                'probability': f"{p.probability * 100:.2f}%",
+                'timestamp': p.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            })
+        return jsonify(history_list), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # --- 6. RUN THE FLASK APP & DB SETUP COMMAND ---
 if __name__ == '__main__':
