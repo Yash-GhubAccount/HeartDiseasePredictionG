@@ -3,6 +3,7 @@ from flask import request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 import joblib
 import pandas as pd
 import os
@@ -17,11 +18,12 @@ CORS(app)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'cardiocare.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["JWT_SECRET_KEY"] = "your-super-secret-key-change-me" 
 
 # --- Initialize Extensions ---
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-# JWTManager is removed
+jwt = JWTManager(app)
 
 # --- 2. DEFINE DATABASE MODELS ---
 class User(db.Model):
@@ -96,8 +98,10 @@ def login():
     password = data.get('password')
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.check_password_hash(user.password_hash, password):
-        # SIMPLIFIED: Return user ID and role directly instead of a token.
-        return jsonify(userId=user.id, userRole=user.role), 200
+        # This identity object is what causes the "Subject must be a string" error
+        identity = {'user_id': user.id, 'role': user.role}
+        access_token = create_access_token(identity=identity)
+        return jsonify(access_token=access_token, userRole=user.role), 200
     return jsonify({"message": "Invalid credentials"}), 401
 
 # --- 5. PREDICTION & HISTORY API ENDPOINTS ---
@@ -114,21 +118,16 @@ def generate_recommendations(user_inputs, prediction_result):
     return recommendations
 
 @app.route("/api/predict", methods=["POST"])
-# @jwt_required() is removed
+@jwt_required()
 def predict():
     if not all([lr_pipeline, xgb_pipeline, thresholds]):
         return jsonify({"error": "ML models are not loaded. Server setup is incomplete."}), 500
     try:
-        json_data = request.get_json()
-        # SIMPLIFIED: Get user_id from the request body instead of a token.
-        user_id = json_data.get('userId')
-        if not user_id:
-            return jsonify({"error": "User ID is missing"}), 400
-
-        # The prediction logic remains the same
-        prediction_inputs = {k: v for k, v in json_data.items() if k != 'userId'}
-        input_df = pd.DataFrame([prediction_inputs])
+        current_user_identity = get_jwt_identity()
+        user_id = current_user_identity['user_id']
         
+        json_data = request.get_json()
+        input_df = pd.DataFrame([json_data])
         probs_lr = lr_pipeline.predict_proba(input_df)[:, 1]
         probs_xgb = xgb_pipeline.predict_proba(input_df)[:, 1]
         weighted_avg_prob = (0.3 * probs_lr) + (0.7 * probs_xgb)
@@ -136,9 +135,9 @@ def predict():
         prediction_value = (weighted_avg_prob >= threshold).astype(int)[0]
         prediction_result = "Yes" if prediction_value == 1 else "No"
         probability_score = weighted_avg_prob[0]
-        recommendation_list = generate_recommendations(prediction_inputs, prediction_result)
+        recommendation_list = generate_recommendations(json_data, prediction_result)
 
-        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(prediction_inputs))
+        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(json_data))
         db.session.add(new_prediction)
         db.session.commit()
 
@@ -150,28 +149,6 @@ def predict():
         return jsonify(response)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
-
-@app.route("/api/history", methods=["GET"])
-# @jwt_required() is removed
-def get_history():
-    try:
-        # SIMPLIFIED: Get user_id from query parameters instead of a token.
-        user_id = request.args.get('userId')
-        if not user_id:
-            return jsonify({"error": "User ID is missing"}), 400
-
-        predictions = Prediction.query.filter_by(user_id=user_id).order_by(Prediction.timestamp.desc()).all()
-        history_list = []
-        for p in predictions:
-            history_list.append({
-                'id': p.id,
-                'result': p.result,
-                'probability': f"{p.probability * 100:.2f}%",
-                'timestamp': p.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            })
-        return jsonify(history_list), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 # --- 6. RUN THE FLASK APP & DB SETUP COMMAND ---
 if __name__ == '__main__':

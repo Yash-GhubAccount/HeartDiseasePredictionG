@@ -15,12 +15,13 @@
         .active-page { display: block; animation: fadeIn 0.5s ease-in-out; }
         body { font-family: 'Inter', sans-serif; }
         select { background-position: right 0.5rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        /* Simple loading spinner */
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border-left-color: #dc2626;
+            border-left-color: #dc2626; /* red-600 */
             animation: spin 1s ease infinite;
         }
         @keyframes spin {
@@ -190,9 +191,14 @@
                 <p class="text-5xl font-bold my-4 text-red-600" id="prediction-output">---</p>
                 <p class="text-gray-500" id="prediction-probability">(Probability: ---)</p>
             </div>
+            <div id="result-error" class="hidden my-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                <p>Could not get a prediction. Please ensure the backend server is running and try again.</p>
+            </div>
             <div class="text-left bg-gray-50 p-6 rounded-lg">
                <h3 class="text-xl font-semibold mb-3">Recommendations</h3>
-               <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-gray-700"><li>Recommendations will appear here...</li></ul>
+               <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-gray-700">
+                   <li>Recommendations will appear here...</li>
+               </ul>
             </div>
             <div class="mt-8 flex flex-col md:flex-row justify-center gap-4">
                 <a href="#appointments" class="w-full md:w-auto bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition transform hover:scale-105">Book Appointment</a>
@@ -200,30 +206,8 @@
             </div>
         </div></section>
 
-        <!-- Prediction History Page -->
-        <section id="prediction-history" class="page">
-            <div class="bg-white p-8 rounded-lg shadow-lg">
-                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
-                <h1 class="text-3xl font-bold text-gray-900 mb-4">Prediction History</h1>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="w-1/3 text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
-                                <th class="w-1/3 text-left py-3 px-4 uppercase font-semibold text-sm">Result</th>
-                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Probability</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body" class="text-gray-700">
-                            <!-- JS will populate this -->
-                            <tr><td colspan="3" class="text-center py-4">Loading history...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-        
         <!-- Placeholder Pages -->
+        <section id="prediction-history" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Prediction History</h1><p>This page will show a table of past predictions. (Content to be built)</p></div></section>
         <section id="recommendations" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Recommendations</h1><p>This page will show latest and previous recommendations. (Content to be built)</p></div></section>
         <section id="appointments" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Appointments</h1><p>This page will allow booking and viewing appointments. (Content to be built)</p></div></section>
         <section id="view-predictions" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">View Patient Predictions</h1><p>This page is for doctors to see recent patient results. (Content to be built)</p></div></section>
@@ -235,237 +219,207 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIG & STATE ---
-            const API_BASE_URL = 'http://122.169.122.247:5000/api';
-            let userState = { userId: null, role: null };
-
             // --- DOM ELEMENTS ---
             const pages = document.querySelectorAll('.page');
-            const allNavLinks = document.querySelectorAll('a[href^="#"]'); 
-            const navLinksContainer = document.getElementById('nav-links');
-            const userNavLinksContainer = document.getElementById('user-nav-links');
-            const logoutButton = document.getElementById('logout-button');
-            const notification = document.getElementById('notification');
-            const notificationMessage = document.getElementById('notification-message');
-            
-            // Forms
-            const loginForm = document.getElementById('login-form');
-            const registerForm = document.getElementById('register-form');
+            const navLinks = document.querySelectorAll('a[href^="#"]'); 
             const registerRoleSelect = document.getElementById('register-role');
             const patientFields = document.getElementById('patient-fields');
             const doctorFields = document.getElementById('doctor-fields');
-            
-            // Prediction
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
             const predictionForm = document.getElementById('prediction-form');
             const predictionLoader = document.getElementById('prediction-loader');
             const predictionButton = document.getElementById('prediction-button');
 
-            // Result Page
+            // Nav UI
+            const navLinksContainer = document.getElementById('nav-links');
+            const userNavLinksContainer = document.getElementById('user-nav-links');
+            const logoutButton = document.getElementById('logout-button');
+
+            // Result page elements
             const predictionOutput = document.getElementById('prediction-output');
             const predictionProbability = document.getElementById('prediction-probability');
             const recommendationsList = document.getElementById('recommendations-list');
+            const resultError = document.getElementById('result-error');
 
-            // History Page
-            const historyTableBody = document.getElementById('history-table-body');
+            // --- STATE ---
+            let loggedInUserRole = null;
+            const API_URL = 'http://127.0.0.1:5000/api';
 
-            // --- NOTIFICATION HELPER ---
-            const showNotification = (message) => {
-                notificationMessage.textContent = message;
-                notification.classList.remove('hidden');
-                setTimeout(() => { notification.classList.add('hidden'); }, 4000);
-            };
-
-            // --- API CALLS ---
-            const fetchPredictionHistory = async () => {
-                if (!userState.userId) return;
-                historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Loading history...</td></tr>';
-                try {
-                    // SIMPLIFIED: Pass userId as a query parameter
-                    const response = await fetch(`${API_BASE_URL}/history?userId=${userState.userId}`);
-                    const historyData = await response.json();
-                    if (!response.ok) throw new Error(historyData.message || 'Failed to fetch history');
-                    
-                    if (historyData.length === 0) {
-                        historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No prediction history found.</td></tr>';
-                        return;
-                    }
-                    
-                    historyTableBody.innerHTML = historyData.map(p => `
-                        <tr class="border-b">
-                            <td class="py-3 px-4">${p.timestamp}</td>
-                            <td class="py-3 px-4 font-semibold ${p.result === 'Yes' ? 'text-red-600' : 'text-green-600'}">${p.result}</td>
-                            <td class="py-3 px-4">${p.probability}</td>
-                        </tr>
-                    `).join('');
-
-                } catch (error) {
-                    showNotification(error.message);
-                    historyTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-600">Could not load history.</td></tr>`;
-                }
-            };
-
-            // --- ROUTING ---
+            // --- ROUTER ---
             const showPage = (hash) => {
                 const targetId = hash ? hash.substring(1) : 'home';
-                
-                // When navigating to history, fetch the data
-                if(targetId === 'prediction-history'){
-                    fetchPredictionHistory();
-                }
-
                 const allowedPages = Array.from(pages).map(p => p.id);
                 if (!allowedPages.includes(targetId)) {
                     window.location.hash = '#home'; return;
                 }
                 const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history', 'recommendations', 'appointments'];
-                if (!userState.userId && protectedPages.includes(targetId)) {
+                if (!loggedInUserRole && protectedPages.includes(targetId)) {
                     window.location.hash = '#login'; return;
                 }
                 pages.forEach(page => page.classList.toggle('active-page', page.id === targetId));
                 window.scrollTo(0, 0);
             };
 
-            // --- UI LOGIC ---
-            const updateUIForLoginState = () => {
-                const isLoggedIn = !!userState.userId;
-                navLinksContainer.classList.toggle('hidden', isLoggedIn);
-                userNavLinksContainer.classList.toggle('hidden', !isLoggedIn);
-            };
-            
-            // --- SESSION MANAGEMENT ---
-            const saveSession = (userId, role) => {
-                userState = { userId, role };
-                localStorage.setItem('session', JSON.stringify(userState));
-                updateUIForLoginState();
-            };
-
-            const clearSession = () => {
-                userState = { userId: null, role: null };
-                localStorage.removeItem('session');
-                updateUIForLoginState();
-            };
-
-            const loadSession = () => {
-                const session = localStorage.getItem('session');
-                if (session) {
-                    userState = JSON.parse(session);
-                }
-                updateUIForLoginState();
-            };
-
-            // --- EVENT LISTENERS ---
             window.addEventListener('hashchange', () => showPage(window.location.hash));
-            allNavLinks.forEach(link => {
+            showPage(window.location.hash || '#home');
+            navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     const href = link.getAttribute('href');
-                    if (href.startsWith('#')) { e.preventDefault(); window.location.hash = href; }
+                    if (href.startsWith('#')) {
+                        e.preventDefault();
+                        window.location.hash = href;
+                    }
                 });
             });
-
-            logoutButton.addEventListener('click', () => {
-                clearSession();
-                window.location.hash = '#home';
-            });
             
+            // --- UI LOGIC ---
+            const updateNavUI = () => {
+                const isLoggedIn = !!localStorage.getItem('accessToken');
+                if(isLoggedIn) {
+                    navLinksContainer.classList.add('hidden');
+                    userNavLinksContainer.classList.remove('hidden');
+                } else {
+                    navLinksContainer.classList.remove('hidden');
+                    userNavLinksContainer.classList.add('hidden');
+                }
+            };
+
             registerRoleSelect.addEventListener('change', () => {
                 const isDoctor = registerRoleSelect.value === 'doctor';
                 patientFields.classList.toggle('hidden', isDoctor);
                 doctorFields.classList.toggle('hidden', !isDoctor);
             });
 
-            // --- FORM SUBMISSIONS ---
+            // --- FORM HANDLING ---
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                try {
+                    const response = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message);
+                    
+                    localStorage.setItem('accessToken', data.access_token);
+                    localStorage.setItem('userRole', data.userRole);
+                    loggedInUserRole = data.userRole;
+                    updateNavUI();
+                    window.location.hash = data.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
+
+                } catch (error) {
+                    alert(`Login failed: ${error.message}`);
+                }
+            });
+            
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('userRole');
+                loggedInUserRole = null;
+                updateNavUI();
+                window.location.hash = '#home';
+            });
+
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(registerForm);
                 const data = Object.fromEntries(formData.entries());
 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/register`, {
+                     const response = await fetch(`${API_URL}/register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
                     const result = await response.json();
-                    if (!response.ok) throw new Error(result.message || 'Registration failed');
+                    if (!response.ok) throw new Error(result.message);
                     
                     alert('Registration successful! Please log in.');
                     window.location.hash = '#login';
+
                 } catch (error) {
-                    showNotification(error.message);
+                    alert(`Registration failed: ${error.message}`);
                 }
             });
 
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(loginForm);
-                const data = Object.fromEntries(formData.entries());
-                
-                try {
-                    const response = await fetch(`${API_BASE_URL}/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message || 'Login failed');
-                    
-                    saveSession(result.userId, result.userRole);
-                    window.location.hash = result.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
-                } catch (error) {
-                    showNotification(error.message);
-                }
-            });
-
+            // --- PREDICTION FORM (API INTEGRATION) ---
             predictionForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 predictionLoader.classList.remove('hidden');
                 predictionButton.disabled = true;
 
+                // 1. Collect form data into an object
                 const formData = {
-                    "General_Health": document.getElementById('General_Health').value,
-                    "Checkup": document.getElementById('Checkup').value,
-                    "Exercise": document.querySelector('input[name="Exercise"]:checked').value,
-                    "Smoking_History": document.querySelector('input[name="Smoking_History"]:checked').value,
-                    "Alcohol_Consumption": parseInt(document.getElementById('Alcohol_Consumption').value, 10),
-                    "Fruit_Consumption": parseInt(document.getElementById('Fruit_Consumption').value, 10),
-                    "Green_Vegetables_Consumption": parseInt(document.getElementById('Green_Vegetables_Consumption').value, 10),
-                    "FriedPotato_Consumption": parseInt(document.getElementById('FriedPotato_Consumption').value, 10),
-                    "BMI": parseFloat(document.getElementById('BMI').value),
-                    "Sex": document.getElementById('Sex').value,
-                    "Age_Category": document.getElementById('Age_Category').value,
-                    "Diabetes": document.querySelector('input[name="Diabetes"]:checked').value,
-                    "Depression": document.querySelector('input[name="Depression"]:checked').value,
-                    "Arthritis": document.querySelector('input[name="Arthritis"]:checked').value,
-                    "Skin_Cancer": document.querySelector('input[name="Skin_Cancer"]:checked').value,
-                    "Other_Cancer": document.querySelector('input[name="Other_Cancer"]:checked').value,
-                    "userId": userState.userId // SIMPLIFIED: Pass userId in the body
+                    "General_Health": document.getElementById('general-health').value,
+                    "Checkup": document.getElementById('checkup').value,
+                    "Exercise": document.querySelector('input[name="exercise"]:checked').value,
+                    "Smoking_History": document.querySelector('input[name="smoking"]:checked').value,
+                    "Alcohol_Consumption": parseInt(document.getElementById('alcohol-consumption').value, 10),
+                    "Fruit_Consumption": parseInt(document.getElementById('fruit-consumption').value, 10),
+                    "Green_Vegetables_Consumption": parseInt(document.getElementById('green-veg-consumption').value, 10),
+                    "FriedPotato_Consumption": parseInt(document.getElementById('fried-potato-consumption').value, 10),
+                    "BMI": parseFloat(document.getElementById('bmi').value),
+                    "Sex": localStorage.getItem('userGender') || 'Female', // Assuming gender is stored on registration
+                    "Age_Category": document.getElementById('age-category').value,
+                    "Diabetes": document.getElementById('diabetes').value,
+                    "Depression": document.querySelector('input[name="depression"]:checked').value,
+                    "Arthritis": document.querySelector('input[name="arthritis"]:checked').value,
+                    "Skin_Cancer": document.querySelector('input[name="skin-cancer"]:checked').value,
+                    "Other_Cancer": document.querySelector('input[name="other-cancer"]:checked').value
                 };
 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/predict`, {
+                    const token = localStorage.getItem('accessToken');
+                    if (!token) throw new Error("You are not logged in.");
+                    // 2. Send data to the backend API
+                    const response = await fetch(`${API_URL}/predict`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
                         body: JSON.stringify(formData)
                     });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.msg || `HTTP error! status: ${response.status}`);
+                    }
+
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || 'Prediction failed');
-                    
+
+                    // 3. Update the result page with real data
                     predictionOutput.textContent = data.prediction;
-                    predictionOutput.style.color = data.prediction === 'Yes' ? '#dc2626' : '#16a34a';
+                    predictionOutput.style.color = data.prediction === 'Yes' ? '#dc2626' : '#16a34a'; // red-600 or green-600
                     predictionProbability.textContent = `(Probability: ${data.probability})`;
-                    recommendationsList.innerHTML = data.recommendations.map(rec => `<li>${rec}</li>`).join('');
                     
+                    recommendationsList.innerHTML = ''; // Clear previous recommendations
+                    data.recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.textContent = rec;
+                        recommendationsList.appendChild(li);
+                    });
+
                     window.location.hash = '#result';
+
                 } catch (error) {
-                    showNotification(error.message);
+                    console.error("Fetch error:", error);
+                    alert(`Prediction failed: ${error.message}`);
+                    resultError.classList.remove('hidden'); // Show error message on result page
                 } finally {
+                    // 4. Reset the button and loader
                     predictionLoader.classList.add('hidden');
                     predictionButton.disabled = false;
                 }
             });
 
-            // --- INITIALIZATION ---
-            loadSession();
+            // Initial UI Update & Session check
+            loggedInUserRole = localStorage.getItem('userRole');
+            updateNavUI();
             showPage(window.location.hash || '#home');
         });
     </script>
