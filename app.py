@@ -98,7 +98,7 @@ def login():
     password = data.get('password')
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.check_password_hash(user.password_hash, password):
-        # Correctly cast the user ID to a string for the JWT identity.
+        # DEFINITIVE FIX: Explicitly cast the user ID to a string for the JWT identity.
         access_token = create_access_token(identity=str(user.id))
         return jsonify(access_token=access_token, userRole=user.role), 200
     return jsonify({"message": "Invalid credentials"}), 401
@@ -122,21 +122,24 @@ def predict():
     if not all([lr_pipeline, xgb_pipeline, thresholds]):
         return jsonify({"error": "ML models are not loaded. Server setup is incomplete."}), 500
     try:
+        # DEFINITIVE FIX: Get the identity (now a string) and cast it back to an integer for database queries.
         user_id = int(get_jwt_identity())
         
         json_data = request.get_json()
-
-        # FIX: Manually map binary string features to integers before prediction.
+        
+        # Manually map binary string features from the form to integers before prediction.
         binary_map = {"Yes": 1, "No": 0, "Male": 1, "Female": 0}
         binary_cols = [
             "Exercise", "Smoking_History", "Diabetes", "Depression",
             "Arthritis", "Skin_Cancer", "Other_Cancer", "Sex"
         ]
+        
+        processed_data = json_data.copy()
         for col in binary_cols:
-            if col in json_data and isinstance(json_data[col], str):
-                json_data[col] = binary_map.get(json_data[col])
+            if col in processed_data and isinstance(processed_data[col], str):
+                processed_data[col] = binary_map.get(processed_data[col])
 
-        input_df = pd.DataFrame([json_data])
+        input_df = pd.DataFrame([processed_data])
         
         probs_lr = lr_pipeline.predict_proba(input_df)[:, 1]
         probs_xgb = xgb_pipeline.predict_proba(input_df)[:, 1]
@@ -147,9 +150,9 @@ def predict():
         probability_score = weighted_avg_prob[0]
         
         # Pass the original string data to recommendations, not the mapped data
-        recommendation_list = generate_recommendations(request.get_json(), prediction_result)
+        recommendation_list = generate_recommendations(json_data, prediction_result)
 
-        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(request.get_json()))
+        new_prediction = Prediction(result=prediction_result, probability=probability_score, user_id=user_id, input_data=str(json_data))
         db.session.add(new_prediction)
         db.session.commit()
 
@@ -168,6 +171,7 @@ def predict():
 @jwt_required()
 def get_history():
     try:
+        # DEFINITIVE FIX: Get the identity (now a string) and cast it back to an integer for database queries.
         user_id = int(get_jwt_identity())
         predictions = Prediction.query.filter_by(user_id=user_id).order_by(Prediction.timestamp.desc()).all()
         history_list = []

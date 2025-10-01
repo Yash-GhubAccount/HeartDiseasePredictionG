@@ -257,215 +257,258 @@
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- DOM ELEMENTS & STATE ---
-            const pages = document.querySelectorAll('.page');
-            const allNavLinks = document.querySelectorAll('a[href^="#"]'); 
-            const navLinksContainer = document.getElementById('nav-links');
-            const userNavLinksContainer = document.getElementById('user-nav-links');
-            const logoutButton = document.getElementById('logout-button');
-            const notification = document.getElementById('notification');
-            const notificationMessage = document.getElementById('notification-message');
+    document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM ELEMENTS & STATE ---
+    const pages = document.querySelectorAll('.page');
+    const allNavLinks = document.querySelectorAll('a[href^="#"]'); 
+    const navLinksContainer = document.getElementById('nav-links');
+    const userNavLinksContainer = document.getElementById('user-nav-links');
+    const logoutButton = document.getElementById('logout-button');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const predictionForm = document.getElementById('prediction-form');
+    const predictionLoader = document.getElementById('prediction-loader');
+    const predictionButton = document.getElementById('prediction-button');
+
+    const resultContent = document.getElementById('result-content');
+    const resultError = document.getElementById('result-error');
+    const recommendationsList = document.getElementById('recommendations-list');
+    const historyTableBody = document.getElementById('history-table-body');
+    
+    let userState = { token: null, role: null };
+    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+
+    // Track latest request IDs to prevent race conditions
+    let latestPredictionId = 0;
+    let latestHistoryId = 0;
+
+    // --- NOTIFICATION HELPER ---
+    const showNotification = (message) => {
+        notificationMessage.textContent = message;
+        notification.classList.remove('hidden');
+        setTimeout(() => { notification.classList.add('hidden'); }, 4000);
+    };
+
+    // --- API CALLS ---
+    const fetchPredictionHistory = async () => {
+        const requestId = ++latestHistoryId;
+        if (!userState.token) return;
+        historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Loading history...</td></tr>';
+        try {
+            const response = await fetch(`${API_BASE_URL}/history`, {
+                headers: { 'Authorization': `Bearer ${userState.token}` }
+            });
+            const historyData = await response.json();
+            if (!response.ok) throw new Error(historyData.error || 'Failed to fetch history');
             
-            const loginForm = document.getElementById('login-form');
-            const registerForm = document.getElementById('register-form');
-            const predictionForm = document.getElementById('prediction-form');
-            const predictionLoader = document.getElementById('prediction-loader');
-            const predictionButton = document.getElementById('prediction-button');
+            if (requestId !== latestHistoryId) return; // ignore stale response
 
-            const predictionOutput = document.getElementById('prediction-output');
-            const predictionProbability = document.getElementById('prediction-probability');
-            const recommendationsList = document.getElementById('recommendations-list');
-            const historyTableBody = document.getElementById('history-table-body');
+            if (historyData.length === 0) {
+                historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No prediction history found.</td></tr>';
+                return;
+            }
             
-            let userState = { token: null, role: null };
-            const API_BASE_URL = 'http://127.0.0.1:5000/api';
+            historyTableBody.innerHTML = historyData.map(p => `
+                <tr class="border-b">
+                    <td class="py-3 px-4">${p.timestamp}</td>
+                    <td class="py-3 px-4 font-semibold ${p.result === 'Yes' ? 'text-red-600' : 'text-green-600'}">${p.result}</td>
+                    <td class="py-3 px-4">${p.probability}</td>
+                </tr>
+            `).join('');
 
-            // --- NOTIFICATION HELPER ---
-            const showNotification = (message) => {
-                notificationMessage.textContent = message;
-                notification.classList.remove('hidden');
-                setTimeout(() => { notification.classList.add('hidden'); }, 4000);
-            };
+        } catch (error) {
+            if (requestId === latestHistoryId) {
+                showNotification(error.message);
+                historyTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-600">Could not load history.</td></tr>`;
+            }
+        }
+    };
 
-            // --- API CALLS ---
-            const fetchPredictionHistory = async () => {
-                if (!userState.token) return;
-                historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Loading history...</td></tr>';
-                try {
-                    const response = await fetch(`${API_BASE_URL}/history`, {
-                        headers: { 'Authorization': `Bearer ${userState.token}` }
-                    });
-                    const historyData = await response.json();
-                    if (!response.ok) throw new Error(historyData.error || 'Failed to fetch history');
-                    
-                    if (historyData.length === 0) {
-                        historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No prediction history found.</td></tr>';
-                        return;
-                    }
-                    
-                    historyTableBody.innerHTML = historyData.map(p => `
-                        <tr class="border-b">
-                            <td class="py-3 px-4">${p.timestamp}</td>
-                            <td class="py-3 px-4 font-semibold ${p.result === 'Yes' ? 'text-red-600' : 'text-green-600'}">${p.result}</td>
-                            <td class="py-3 px-4">${p.probability}</td>
-                        </tr>
-                    `).join('');
+    // --- ROUTING & UI ---
+    const showPage = (hash) => {
+        const targetId = hash ? hash.substring(1) : 'home';
+        const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history'];
+        if (!userState.token && protectedPages.includes(targetId)) {
+            window.location.hash = '#login'; return;
+        }
 
-                } catch (error) {
-                    showNotification(error.message);
-                    historyTableBody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-600">Could not load history.</td></tr>`;
-                }
-            };
+        if (targetId === 'prediction-history') {
+            fetchPredictionHistory();
+        }
 
-            // --- ROUTING & UI ---
-            const showPage = (hash) => {
-                const targetId = hash ? hash.substring(1) : 'home';
-                const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history'];
-                if (!userState.token && protectedPages.includes(targetId)) {
-                    window.location.hash = '#login'; return;
-                }
+        pages.forEach(page => page.classList.toggle('active-page', page.id === targetId));
+        window.scrollTo(0, 0);
+    };
 
-                if (targetId === 'prediction-history') {
-                    fetchPredictionHistory();
-                }
+    const updateUIForLoginState = () => {
+        const isLoggedIn = !!userState.token;
+        navLinksContainer.classList.toggle('hidden', isLoggedIn);
+        userNavLinksContainer.classList.toggle('hidden', !isLoggedIn);
+    };
 
-                pages.forEach(page => page.classList.toggle('active-page', page.id === targetId));
-                window.scrollTo(0, 0);
-            };
+    // --- SESSION MANAGEMENT ---
+    const saveSession = (token, role) => {
+        userState = { token, role };
+        localStorage.setItem('session', JSON.stringify(userState));
+        updateUIForLoginState();
+    };
 
-            const updateUIForLoginState = () => {
-                const isLoggedIn = !!userState.token;
-                navLinksContainer.classList.toggle('hidden', isLoggedIn);
-                userNavLinksContainer.classList.toggle('hidden', !isLoggedIn);
-            };
+    const clearSession = () => {
+        userState = { token: null, role: null };
+        localStorage.removeItem('session');
+        updateUIForLoginState();
+    };
 
-            // --- SESSION MANAGEMENT ---
-            const saveSession = (token, role) => {
-                userState = { token, role };
-                localStorage.setItem('session', JSON.stringify(userState));
-                updateUIForLoginState();
-            };
+    const loadSession = () => {
+        const session = localStorage.getItem('session');
+        if (session) {
+            userState = JSON.parse(session);
+        }
+        updateUIForLoginState();
+    };
 
-            const clearSession = () => {
-                userState = { token: null, role: null };
-                localStorage.removeItem('session');
-                updateUIForLoginState();
-            };
-
-            const loadSession = () => {
-                const session = localStorage.getItem('session');
-                if (session) {
-                    userState = JSON.parse(session);
-                }
-                updateUIForLoginState();
-            };
-
-            // --- EVENT LISTENERS ---
-            window.addEventListener('hashchange', () => showPage(window.location.hash));
-            allNavLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    if (link.getAttribute('href').startsWith('#')) { e.preventDefault(); window.location.hash = link.getAttribute('href'); }
-                });
-            });
-
-            logoutButton.addEventListener('click', () => {
-                clearSession();
-                window.location.hash = '#home';
-            });
-            
-            // --- FORM SUBMISSIONS ---
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(registerForm);
-                const data = Object.fromEntries(formData.entries());
-                try {
-                    const response = await fetch(`${API_BASE_URL}/register`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message || 'Registration failed');
-                    alert('Registration successful! Please log in.');
-                    window.location.hash = '#login';
-                } catch (error) { showNotification(error.message); }
-            });
-
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(loginForm);
-                const data = Object.fromEntries(formData.entries());
-                try {
-                    const response = await fetch(`${API_BASE_URL}/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message || 'Login failed');
-                    saveSession(result.access_token, result.userRole);
-                    window.location.hash = result.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
-                } catch (error) { showNotification(error.message); }
-            });
-
-            predictionForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                predictionLoader.classList.remove('hidden');
-                predictionButton.disabled = true;
-                predictionButton.textContent = 'Analyzing...';
-
-                try {
-                    const formData = {
-                        "General_Health": document.getElementById('General_Health').value,
-                        "Checkup": document.getElementById('Checkup').value,
-                        "Exercise": document.querySelector('input[name="Exercise"]:checked').value,
-                        "Smoking_History": document.querySelector('input[name="Smoking_History"]:checked').value,
-                        "Alcohol_Consumption": parseInt(document.getElementById('Alcohol_Consumption').value, 10),
-                        "Fruit_Consumption": parseInt(document.getElementById('Fruit_Consumption').value, 10),
-                        "Green_Vegetables_Consumption": parseInt(document.getElementById('Green_Vegetables_Consumption').value, 10),
-                        "FriedPotato_Consumption": parseInt(document.getElementById('FriedPotato_Consumption').value, 10),
-                        "BMI": parseFloat(document.getElementById('BMI').value),
-                        "Sex": document.getElementById('Sex').value,
-                        "Age_Category": document.getElementById('Age_Category').value,
-                        "Diabetes": document.querySelector('input[name="Diabetes"]:checked').value,
-                        "Depression": document.querySelector('input[name="Depression"]:checked').value,
-                        "Arthritis": document.querySelector('input[name="Arthritis"]:checked').value,
-                        "Skin_Cancer": document.querySelector('input[name="Skin_Cancer"]:checked').value,
-                        "Other_Cancer": document.querySelector('input[name="Other_Cancer"]:checked').value
-                    };
-
-                    const response = await fetch(`${API_BASE_URL}/predict`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${userState.token}`
-                        },
-                        body: JSON.stringify(formData)
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.msg || data.error || 'Prediction failed');
-
-                    predictionOutput.textContent = data.prediction;
-                    predictionOutput.style.color = data.prediction === 'Yes' ? '#dc2626' : '#16a34a';
-                    predictionProbability.textContent = `(Probability: ${data.probability})`;
-                    recommendationsList.innerHTML = data.recommendations.map(rec => `<li>${rec}</li>`).join('');
-                    
-                    window.location.hash = '#result';
-                } catch (error) {
-                    showNotification(error.message);
-                } finally {
-                    predictionLoader.classList.add('hidden');
-                    predictionButton.disabled = false;
-                    predictionButton.textContent = 'Get Prediction';
-                }
-            });
-
-            // --- INITIALIZATION ---
-            loadSession();
-            showPage(window.location.hash || '#home');
+    // --- EVENT LISTENERS ---
+    window.addEventListener('hashchange', () => showPage(window.location.hash));
+    allNavLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (link.getAttribute('href').startsWith('#')) { 
+                e.preventDefault(); 
+                window.location.hash = link.getAttribute('href'); 
+            }
         });
-    </script>
+    });
+
+    logoutButton.addEventListener('click', () => {
+        clearSession();
+        window.location.hash = '#home';
+    });
+    
+    // --- FORM SUBMISSIONS ---
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = registerForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            const formData = new FormData(registerForm);
+            const data = Object.fromEntries(formData.entries());
+            const response = await fetch(`${API_BASE_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Registration failed');
+            alert('Registration successful! Please log in.');
+            window.location.hash = '#login';
+        } catch (error) { 
+            showNotification(error.message); 
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = loginForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData.entries());
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Login failed');
+            saveSession(result.access_token, result.userRole);
+            window.location.hash = result.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
+        } catch (error) { 
+            showNotification(error.message); 
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    predictionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const requestId = ++latestPredictionId;
+
+        predictionLoader.classList.remove('hidden');
+        predictionButton.disabled = true;
+        predictionButton.textContent = 'Analyzing...';
+
+        try {
+            const formData = {
+                "General_Health": document.getElementById('General_Health').value,
+                "Checkup": document.getElementById('Checkup').value,
+                "Exercise": document.querySelector('input[name="Exercise"]:checked').value,
+                "Smoking_History": document.querySelector('input[name="Smoking_History"]:checked').value,
+                "Alcohol_Consumption": parseInt(document.getElementById('Alcohol_Consumption').value, 10),
+                "Fruit_Consumption": parseInt(document.getElementById('Fruit_Consumption').value, 10),
+                "Green_Vegetables_Consumption": parseInt(document.getElementById('Green_Vegetables_Consumption').value, 10),
+                "FriedPotato_Consumption": parseInt(document.getElementById('FriedPotato_Consumption').value, 10),
+                "BMI": parseFloat(document.getElementById('BMI').value),
+                "Sex": document.getElementById('Sex').value,
+                "Age_Category": document.getElementById('Age_Category').value,
+                "Diabetes": document.querySelector('input[name="Diabetes"]:checked').value,
+                "Depression": document.querySelector('input[name="Depression"]:checked').value,
+                "Arthritis": document.querySelector('input[name="Arthritis"]:checked').value,
+                "Skin_Cancer": document.querySelector('input[name="Skin_Cancer"]:checked').value,
+                "Other_Cancer": document.querySelector('input[name="Other_Cancer"]:checked').value
+            };
+
+            const response = await fetch(`${API_BASE_URL}/predict`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userState.token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.msg || data.error || 'Prediction failed');
+
+            if (requestId === latestPredictionId) {
+                // Hide error, show content
+                resultError.classList.add('hidden');
+                resultContent.classList.remove('hidden');
+
+                // Render result dynamically
+                resultContent.innerHTML = `
+                    <p class="text-lg text-gray-600">Based on the information provided, our model predicts:</p>
+                    <p class="text-5xl font-bold my-4 ${data.prediction === 'Yes' ? 'text-red-600' : 'text-green-600'}">${data.prediction}</p>
+                    <p class="text-gray-500">(Probability: ${data.probability})</p>
+                `;
+                recommendationsList.innerHTML = data.recommendations.map(rec => `<li>${rec}</li>`).join('');
+                
+                window.location.hash = '#result';
+            }
+        } catch (error) {
+            if (requestId === latestPredictionId) {
+                resultContent.classList.add('hidden');
+                resultError.classList.remove('hidden');
+                showNotification(error.message);
+            }
+        } finally {
+            if (requestId === latestPredictionId) {
+                predictionLoader.classList.add('hidden');
+                predictionButton.disabled = false;
+                predictionButton.textContent = 'Get Prediction';
+            }
+        }
+    });
+
+    // --- INITIALIZATION ---
+    loadSession();
+    showPage(window.location.hash || '#home');
+});
+</script>
+
+
 </body>
 </html>
 
