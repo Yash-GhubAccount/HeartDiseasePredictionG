@@ -198,31 +198,29 @@
             </div>
         </section>
 
-        <!-- Result Page -->
-        <section id="result" class="page">
-            <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg text-center">
-                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block text-left w-full">&larr; Back to Dashboard</a>
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Prediction Result</h2>
-                <div id="result-content" class="mb-8">
-                    <p class="text-lg text-gray-600">Based on the information provided, our model predicts:</p>
-                    <p class="text-5xl font-bold my-4 text-red-600" id="prediction-output">---</p>
-                    <p class="text-gray-500" id="prediction-probability">(Probability: ---)</p>
-                </div>
-                <div id="result-error" class="hidden my-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                    <p>Could not get a prediction. Please ensure the backend server is running and try again.</p>
-                </div>
-                <div class="text-left bg-gray-50 p-6 rounded-lg">
-                   <h3 class="text-xl font-semibold mb-3">Recommendations</h3>
-                   <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-gray-700">
-                       <li>Recommendations will appear here...</li>
-                   </ul>
-                </div>
-                <div class="mt-8 flex flex-col md:flex-row justify-center gap-4">
-                    <a href="#appointments" class="w-full md:w-auto bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition transform hover:scale-105">Book Appointment</a>
-                    <a href="#prediction-history" class="w-full md:w-auto bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition transform hover:scale-105">View History</a>
-                </div>
+                <!-- Result Page -->
+                <section id="result" class="page">
+        <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg text-center">
+            <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block text-left w-full">&larr; Back to Dashboard</a>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Prediction Result</h2>
+
+            <!-- Dynamic content -->
+            <div id="result-content" class="mb-8"></div>
+
+            <!-- Error message -->
+            <div id="result-error" class="hidden my-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            <p>Could not get a prediction. Please ensure the backend server is running and try again.</p>
             </div>
+
+            <!-- Recommendations -->
+            <div class="text-left bg-gray-50 p-6 rounded-lg">
+            <h3 class="text-xl font-semibold mb-3">Recommendations</h3>
+            <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-gray-700"></ul>
+            </div>
+        </div>
         </section>
+
+
 
         <!-- Prediction History Page -->
         <section id="prediction-history" class="page">
@@ -247,7 +245,19 @@
         </section>
         
         <!-- Other Placeholder Pages -->
-        <section id="recommendations" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Recommendations</h1><p>This page is for viewing recommendations.</p></div></section>
+         <!-- ✅ Replace your placeholder Recommendations section with this -->
+        <section id="recommendations" class="page">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+            <h1 class="text-3xl font-bold mb-6">Your Recommendations</h1>
+            
+            <!-- Container where recommendations will load -->
+            <div id="recommendations-container">
+            <p class="text-gray-500">Loading recommendations...</p>
+            </div>
+        </div>
+        </section>
+
         <section id="appointments" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Appointments</h1><p>This page is for booking appointments.</p></div></section>
         <section id="view-predictions" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">View Patient Predictions</h1><p>This page is for doctors.</p></div></section>
         <section id="patient-history-viewer" class="page"><div class="bg-white p-8 rounded-lg shadow-lg"><a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a><h1 class="text-3xl font-bold">Patient History Viewer</h1><p>This page is for doctors.</p></div></section>
@@ -284,6 +294,7 @@
     // Track latest request IDs to prevent race conditions
     let latestPredictionId = 0;
     let latestHistoryId = 0;
+    let navigatingToResult=false;
 
     // --- NOTIFICATION HELPER ---
     const showNotification = (message) => {
@@ -304,7 +315,7 @@
             const historyData = await response.json();
             if (!response.ok) throw new Error(historyData.error || 'Failed to fetch history');
             
-            if (requestId !== latestHistoryId) return; // ignore stale response
+            if (requestId !== latestHistoryId) return;
 
             if (historyData.length === 0) {
                 historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No prediction history found.</td></tr>';
@@ -327,16 +338,62 @@
         }
     };
 
+    const fetchRecommendations = async () => {
+        if (!userState.token) return;
+        const container = document.getElementById('recommendations-container');
+        container.innerHTML = '<p class="text-gray-500">Loading recommendations...</p>';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/recommendations`, {
+                headers: { 'Authorization': `Bearer ${userState.token}` }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to fetch recommendations');
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No recommendations available yet. Make a prediction first!</p>';
+                return;
+            }
+
+            container.innerHTML = data.map(pred => `
+                <div class="mb-6 border-b pb-4">
+                    <h3 class="text-lg font-semibold mb-2">
+                        Prediction on ${pred.timestamp} →
+                        <span class="${pred.result === 'Yes' ? 'text-red-600' : 'text-green-600'}">${pred.result}</span>
+                    </h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700">
+                        ${pred.recommendations.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            showNotification(error.message);
+            container.innerHTML = '<p class="text-red-600">Could not load recommendations.</p>';
+        }
+    };
+
     // --- ROUTING & UI ---
     const showPage = (hash) => {
         const targetId = hash ? hash.substring(1) : 'home';
-        const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history'];
+        const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history', 'recommendations'];
         if (!userState.token && protectedPages.includes(targetId)) {
-            window.location.hash = '#login'; return;
+            window.location.hash = '#login'; 
+            return;
         }
+
+        if (targetId === 'result' && !resultContent.innerHTML.trim()) {
+            window.location.hash = '#patient-dashboard';
+            showNotification('Please make a prediction first');
+            return;
+        }
+        navigatingToResult=false;
 
         if (targetId === 'prediction-history') {
             fetchPredictionHistory();
+        }
+        if (targetId === 'recommendations') {
+            fetchRecommendations();
         }
 
         pages.forEach(page => page.classList.toggle('active-page', page.id === targetId));
@@ -402,6 +459,7 @@
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Registration failed');
             alert('Registration successful! Please log in.');
+            registerForm.reset();
             window.location.hash = '#login';
         } catch (error) { 
             showNotification(error.message); 
@@ -425,6 +483,7 @@
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Login failed');
             saveSession(result.access_token, result.userRole);
+            loginForm.reset();
             window.location.hash = result.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
         } catch (error) { 
             showNotification(error.message); 
@@ -469,27 +528,32 @@
                 },
                 body: JSON.stringify(formData)
             });
+
             const data = await response.json();
             if (!response.ok) throw new Error(data.msg || data.error || 'Prediction failed');
 
             if (requestId === latestPredictionId) {
-                // Hide error, show content
                 resultError.classList.add('hidden');
-                resultContent.classList.remove('hidden');
-
-                // Render result dynamically
+                
                 resultContent.innerHTML = `
                     <p class="text-lg text-gray-600">Based on the information provided, our model predicts:</p>
-                    <p class="text-5xl font-bold my-4 ${data.prediction === 'Yes' ? 'text-red-600' : 'text-green-600'}">${data.prediction}</p>
+                    <p class="text-5xl font-bold my-4 ${data.prediction === 'Yes' ? 'text-red-600' : 'text-green-600'}">
+                        ${data.prediction}
+                    </p>
                     <p class="text-gray-500">(Probability: ${data.probability})</p>
                 `;
+
                 recommendationsList.innerHTML = data.recommendations.map(rec => `<li>${rec}</li>`).join('');
+
+                predictionForm.reset();
+
+                navigatingToResult=true;
                 
                 window.location.hash = '#result';
             }
         } catch (error) {
             if (requestId === latestPredictionId) {
-                resultContent.classList.add('hidden');
+                resultContent.innerHTML = '';
                 resultError.classList.remove('hidden');
                 showNotification(error.message);
             }
