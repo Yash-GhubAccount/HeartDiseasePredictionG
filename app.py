@@ -186,6 +186,31 @@ def get_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# --- GET RECOMMENDATIONS (recomputed from history) ---
+@app.route('/api/recommendations', methods=['GET'])
+@jwt_required()
+def get_recommendations():
+    current_user = get_jwt_identity()
+
+    predictions = Prediction.query.filter_by(user_id=current_user).order_by(Prediction.timestamp.desc()).all()
+    output = []
+
+    for pred in predictions:
+        # Assuming you store input_data as JSON string in Prediction
+        try:
+            user_inputs = json.loads(pred.input_data)
+        except Exception:
+            user_inputs = {}
+
+        recs = generate_recommendations(user_inputs, pred.result)
+        output.append({
+            "timestamp": pred.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "result": pred.result,
+            "recommendations": recs
+        })
+
+    return jsonify(output), 200
+
 # --- 6. RUN THE FLASK APP & DB SETUP COMMAND ---
 if __name__ == '__main__':
     with app.app_context():
