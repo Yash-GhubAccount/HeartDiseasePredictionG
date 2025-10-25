@@ -382,12 +382,17 @@
             return;
         }
 
-        if (targetId === 'result' && !resultContent.innerHTML.trim()) {
+        // If result page is requested but there's no result content yet,
+        // only redirect back to dashboard when this navigation was not
+        // triggered by a just-completed prediction (navigatingToResult).
+        if (targetId === 'result' && !resultContent.innerHTML.trim() && !navigatingToResult) {
             window.location.hash = '#patient-dashboard';
             showNotification('Please make a prediction first');
             return;
         }
-        navigatingToResult=false;
+        // Clear the navigatingToResult flag when we're navigating anywhere
+        // other than the result page so future checks behave correctly.
+        if (targetId !== 'result') navigatingToResult = false;
 
         if (targetId === 'prediction-history') {
             fetchPredictionHistory();
