@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioPredict - Heart Disease Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#home" class="text-2xl font-bold text-red-600 flex items-center transition transform hover:scale-105 duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                        </svg>
+                        CardioPredict
+                    </a>
+                </div>
+                <div id="nav-links" class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a id="home-link" href="#home" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Home</a>
+                        <a id="about-link" href="#about" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">About</a>
+                        <a id="login-link" href="#login" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Login</a>
+                        <a id="register-link" href="#register" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Register</a>
+                    </div>
+                </div>
+                <div id="user-nav-links" class="hidden">
+                    <button id="logout-button" class="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-md text-sm font-medium transition transform hover:scale-105 duration-300">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="notification" class="hidden fixed top-20 right-5 px-4 py-3 rounded-lg shadow-lg z-50" role="alert">
+    <strong class="font-bold" id="notification-title"></strong> <span class="block sm:inline" id="notification-message"></span>
+    </div>
+
+
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="home" class="page active-page">
+            <div class="bg-white p-8 rounded-lg shadow-lg overflow-hidden">
+                <div class="md:flex items-center">
+                    <div class="md:w-1/2 text-center md:text-left p-4">
+                        <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">Predict Your Heart Health</h1>
+                        <p class="text-lg text-gray-600 mb-8">Our application leverages machine learning to analyze key health indicators and predict the likelihood of heart disease. Get instant insights and take proactive steps towards a healthier life.</p>
+                        <a href="#register" class="inline-block bg-red-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-red-700 transition duration-300 transform hover:scale-105">Get Started</a>
+                    </div>
+                    <div class="md:w-1/2 p-4 flex items-center justify-center mt-8 md:mt-0">
+                        <img src="https://placehold.co/500x300/fecaca/dc2626?text=CardioPredict" alt="Healthy Heart Illustration" class="rounded-lg shadow-2xl w-full max-w-md">
+                    </div>
+                </div>
+            </div>
+            <div id="about" class="mt-10 bg-white p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">What is Heart Disease?</h2>
+                <p class="text-gray-700 mb-4">Heart disease refers to a range of conditions that affect your heart. Diseases under the heart disease umbrella include blood vessel diseases, such as coronary artery disease; heart rhythm problems (arrhythmias); and heart defects you're born with (congenital heart defects), among others.</p>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4 mt-6">About CardioPredict</h2>
+                <p class="text-gray-700">CardioPredict is a tool designed to provide a preliminary assessment of heart disease risk based on 16 key health and lifestyle factors. It is not a substitute for professional medical advice. The goal is to raise awareness and encourage users to consult with healthcare professionals for accurate diagnosis and care.</p>
+            </div>
+        </section>
+
+        <section id="login" class="page">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Welcome Back!</h2>
+                <p class="text-center text-gray-500 mb-8">Sign in to access your dashboard.</p>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="login-email" name="email" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="mb-6">
+                        <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="login-password" name="password" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition transform hover:scale-105 duration-300">Login</button>
+                    <p class="text-center mt-4 text-sm text-gray-600">Don't have an account? <a href="#register" class="font-medium text-red-600 hover:text-red-500">Register here</a></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="register" class="page">
+            <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">Create Your Account</h2>
+                <p class="text-center text-gray-500 mb-8">Join us to take control of your heart health.</p>
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label for="register-role" class="block text-sm font-medium text-gray-700">I am a...</label>
+                        <select id="register-role" name="role" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            <option value="patient" selected>Patient</option>
+                            <option value="doctor">Doctor</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-fullname" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="register-fullname" name="full_name" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="register-email" name="email" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="register-password" name="password" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div id="patient-fields">
+                        <div class="mb-4">
+                            <label for="register-age" class="block text-sm font-medium text-gray-700">Age</label>
+                            <input type="number" id="register-age" name="age" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="register-gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select id="register-gender" name="gender" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="register-phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                            <input type="tel" id="register-phone" name="phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                    </div>
+                    <div id="doctor-fields" class="hidden">
+                        <div class="mb-4">
+                            <label for="register-specialization" class="block text-sm font-medium text-gray-700">Specialization</label>
+                            <input type="text" id="register-specialization" name="specialization" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="register-experience" class="block text-sm font-medium text-gray-700">Experience (Years)</label>
+                            <input type="number" id="register-experience" name="experience_years" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="register-clinic" class="block text-sm font-medium text-gray-700">Clinic Address</label>
+                            <input type="text" id="register-clinic" name="clinic_address" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition transform hover:scale-105 duration-300">Register</button>
+                    <p class="text-center mt-4 text-sm text-gray-600">Already have an account? <a href="#login" class="font-medium text-red-600 hover:text-red-500">Login here</a></p>
+                </form>
+            </div>
+        </section>
+
+        <section id="patient-dashboard" class="page">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Patient Dashboard</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <a href="#new-prediction" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Make a New Prediction</h3>
+                    <p class="text-gray-600">Fill out a quick form to get a new risk assessment.</p>
+                </a>
+                <a href="#prediction-history" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Prediction History</h3>
+                    <p class="text-gray-600">View all your past predictions and track your progress.</p>
+                </a>
+                <a href="#recommendations" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Recommendations</h3>
+                    <p class="text-gray-600">Get personalized health tips based on your results.</p>
+                </a>
+                <a href="#appointments" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Book Appointment</h3>
+                    <p class="text-gray-600">Schedule a consultation with a healthcare professional.</p>
+                </a>
+            </div>
+        </section>
+
+        <section id="doctor-dashboard" class="page">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Doctor Dashboard</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <a href="#view-predictions" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">View Patient Predictions</h3>
+                    <p class="text-gray-600">Review the latest predictions submitted by your patients.</p>
+                </a>
+                <a href="#patient-history-viewer" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Patient History Viewer</h3>
+                    <p class="text-gray-600">Access the complete prediction history for any patient.</p>
+                </a>
+                <a href="#manage-recommendations" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Add/Edit Recommendations</h3>
+                    <p class="text-gray-600">Provide personalized notes and advice for patients.</p>
+                </a>
+                <a href="#manage-appointments" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Manage Appointments</h3>
+                    <p class="text-gray-600">Approve, reject, or reschedule appointment requests.</p>
+                </a>
+            </div>
+        </section>
+
+        <section id="new-prediction" class="page">
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">New Heart Disease Prediction</h2>
+                <p class="text-gray-600 mb-8">Please fill in the details as accurately as possible. All fields are required.</p>
+                <form id="prediction-form" class="space-y-6">
+                    <fieldset class="border p-4 rounded-lg">
+                        <legend class="text-lg font-semibold px-2">General Health & Lifestyle</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                            <div>
+                                <label for="General_Health" class="block text-sm font-medium text-gray-700">General Health</label>
+                                <select id="General_Health" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                    <option>Excellent</option>
+                                    <option>Very Good</option>
+                                    <option>Good</option>
+                                    <option>Fair</option>
+                                    <option>Poor</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="Checkup" class="block text-sm font-medium text-gray-700">Last Checkup</label>
+                                <select id="Checkup" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                    <option>Within the past year</option>
+                                    <option>Within the past 2 years</option>
+                                    <option>Within the past 5 years</option>
+                                    <option>5 or more years ago</option>
+                                    <option>Never</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Exercise in past 30 days?</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Exercise" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Exercise" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Smoking History?</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Smoking_History" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Smoking_History" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="border p-4 rounded-lg">
+                        <legend class="text-lg font-semibold px-2">Diet (per month)</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+                            <div>
+                                <label for="Alcohol_Consumption" class="block text-sm font-medium text-gray-700">Alcohol Consumption</label>
+                                <input type="number" id="Alcohol_Consumption" min="0" required class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label for="Fruit_Consumption" class="block text-sm font-medium text-gray-700">Fruit Consumption</label>
+                                <input type="number" id="Fruit_Consumption" min="0" required class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label for="Green_Vegetables_Consumption" class="block text-sm font-medium text-gray-700">Green Vegetables</label>
+                                <input type="number" id="Green_Vegetables_Consumption" min="0" required class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label for="FriedPotato_Consumption" class="block text-sm font-medium text-gray-700">Fried Potatoes</label>
+                                <input type="number" id="FriedPotato_Consumption" min="0" required class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="border p-4 rounded-lg">
+                        <legend class="text-lg font-semibold px-2">Medical Information</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                            <div>
+                                <label for="BMI" class="block text-sm font-medium text-gray-700">Body Mass Index (BMI)</label>
+                                <input type="number" step="0.1" id="BMI" required class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500">
+                            </div>
+                            <div>
+                                <label for="Sex" class="block text-sm font-medium text-gray-700">Sex</label>
+                                <select id="Sex" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="Age_Category" class="block text-sm font-medium text-gray-700">Age Category</label>
+                                <select id="Age_Category" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                    <option>18-24</option>
+                                    <option>25-29</option>
+                                    <option>30-34</option>
+                                    <option>35-39</option>
+                                    <option>40-44</option>
+                                    <option>45-49</option>
+                                    <option>50-54</option>
+                                    <option>55-59</option>
+                                    <option>60-64</option>
+                                    <option>65-69</option>
+                                    <option>70-74</option>
+                                    <option>75-79</option>
+                                    <option>80 or older</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Diabetes</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Diabetes" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Diabetes" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Depression</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Depression" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Depression" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Arthritis</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Arthritis" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Arthritis" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Skin Cancer</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Skin_Cancer" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Skin_Cancer" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Other Cancer</label>
+                                <div class="mt-2 flex space-x-4">
+                                    <label><input type="radio" name="Other_Cancer" value="Yes" required class="focus:ring-red-500 text-red-600"> Yes</label>
+                                    <label><input type="radio" name="Other_Cancer" value="No" class="focus:ring-red-500 text-red-600"> No</label>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="flex justify-end items-center mt-8">
+                        <div id="prediction-loader" class="spinner hidden mr-4"></div>
+                        <button id="prediction-button" type="submit" class="w-full md:w-auto bg-red-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition transform hover:scale-105 duration-300">Get Prediction</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="result" class="page">
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg text-center">
+                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block text-left w-full">&larr; Back to Dashboard</a>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Prediction Result</h2>
+
+                <div id="result-content" class="mb-8"></div>
+
+                <div id="result-error" class="hidden my-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                    <p>Could not get a prediction. Please ensure the backend server is running and try again.</p>
+                </div>
+
+                <div class="text-left bg-gray-50 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-3">Recommendations</h3>
+                    <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-gray-700"></ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="prediction-history" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">Prediction History</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="w-1/3 text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                                <th class="w-1/3 text-left py-3 px-4 uppercase font-semibold text-sm">Result</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Probability</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="text-gray-700">
+                            <tr>
+                                <td colspan="3" class="text-center py-4">Loading history...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendations" class="page">
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+                        <h1 class="text-3xl font-bold mb-6">Your Recommendations</h1>
+
+                        <div id="recommendations-container">
+                            <p class="text-gray-500">Loading recommendations...</p>
+                        </div>
+                    </div>
+        </section>
+
+                <!-- Appointments -->
+                <section id="appointments" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#patient-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Book an Appointment</h1>
+
+                <form id="appointment-form" class="max-w-lg mb-10 space-y-4">
+                    <div>
+                        <label for="doctor-select" class="block text-sm font-medium text-gray-700">Select Doctor</label>
+                        <select id="doctor-select" name="doctor_id" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                            <option value="">Loading doctors...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="appointment-datetime" class="block text-sm font-medium text-gray-700">Date and Time</label>
+                        <input type="datetime-local" id="appointment-datetime" name="appointment_datetime" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div>
+                        <label for="appointment-reason" class="block text-sm font-medium text-gray-700">Reason for Visit</label>
+                        <textarea id="appointment-reason" name="reason" rows="3" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="e.g., Follow-up, New symptoms..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition transform hover:scale-105 duration-300">Book Appointment</button>
+                </form>
+
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Your Appointments</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Doctor</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Reason</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table-body" class="text-gray-700">
+                            <tr><td colspan="4" class="text-center py-4">Loading appointments...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-predictions" class="page">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">View Patient Predictions</h1>
+            <p class="text-gray-600 mb-4">Select a patient to view their detailed prediction history.</p>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Patient Name</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Age</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Gender</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Phone</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patient-list-table-body" class="text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        </section>
+        
+        <section id="patient-history-viewer" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#view-predictions" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Patient List</a>
+                
+                <h1 id="patient-history-title" class="text-3xl font-bold text-gray-900 mb-6">Patient History</h1>
+
+                <div class="overflow-x-auto mb-10">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">All Predictions</h2>
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Result</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Probability</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctor-patient-history-table-body" class="text-gray-700">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div id="prediction-details-container" class="hidden">
+                    <hr class="my-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Prediction Details</h2>
+                    <div id="prediction-details-content" class="bg-gray-50 p-6 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+                    
+                    <div id="recommendation-form-container" class="mt-6">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="manage-recommendations" class="page">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">All Patient Notes</h1>
+            <p class="text-gray-600 mb-4">This page shows all personal notes (recommendations) you have saved for your patients' predictions. To add a new note, go to "View Patient Predictions".</p>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Patient</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Prediction</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Your Note</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recommendations-table-body" class="text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        </section>
+
+        <section id="manage-appointments" class="page">
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <a href="#doctor-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Dashboard</a>
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Manage Appointments</h1>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Patient</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Reason</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Status</th>
+                            <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctor-appointments-table-body" class="text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        </section>
+
+    </main>
+
+    <script src="/static/script.js"></script>
+
+</body>
+</html>
