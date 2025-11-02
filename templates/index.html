@@ -25,15 +25,49 @@
                         CardioPredict
                     </a>
                 </div>
-                <div id="nav-links" class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a id="home-link" href="#home" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Home</a>
-                        <a id="about-link" href="#about" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">About</a>
-                        <a id="login-link" href="#login" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Login</a>
-                        <a id="register-link" href="#register" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Register</a>
+                <div class="flex items-center">
+                    
+                    <!-- Public Nav (Logged Out) -->
+                    <div id="nav-links" class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a id="home-link" href="#home" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Home</a>
+                            <a id="about-link" href="#about" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">About</a>
+                            <a id="login-link" href="#login" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Login</a>
+                            <a id="register-link" href="#register" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition transform hover:-translate-y-0.5 duration-200">Register</a>
+                        </div>
                     </div>
+
+                    <!-- Patient Nav (Logged In) -->
+                    <div id="patient-nav-links" class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#patient-dashboard" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                            <a href="#new-prediction" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">New Prediction</a>
+                            <a href="#prediction-history" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">History</a>
+                            <a href="#appointments" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Appointments</a>
+                        </div>
+                    </div>
+
+                    <!-- Doctor Nav (Logged In) -->
+                    <div id="doctor-nav-links" class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#doctor-dashboard" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                            <a href="#view-predictions" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Patient Predictions</a>
+                            <a href="#manage-appointments" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Appointments</a>
+                            <a href="#manage-recommendations" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">All Notes</a>
+                        </div>
+                    </div>
+
+                    <!-- Admin Nav (Logged In) -->
+                    <div id="admin-nav-links" class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#admin-dashboard" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Admin Dashboard</a>
+                            <a href="#admin-manage-users" class="nav-link text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Manage Users</a>
+                        </div>
+                    </div>
+
                 </div>
-                <div id="user-nav-links" class="hidden">
+                <!-- Logout Button (Shared) -->
+                <div id="user-nav-links" class="hidden" style="display: none;">
                     <button id="logout-button" class="bg-red-500 text-white hover:bg-red-600 px-4 py-2 rounded-md text-sm font-medium transition transform hover:scale-105 duration-300">Logout</button>
                 </div>
             </div>
@@ -589,6 +623,283 @@
             </div>
         </div>
         </section>
+        
+        <section id="admin-dashboard" class="page">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Admin Dashboard</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Manage Users Card -->
+                <a href="#admin-manage-users" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                        <!-- Heroicon: users -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0110 13a5 5 0 01-1.5-4.33A6.97 6.97 0 007 16c0 .34.024.673.07 1h5.86zM6.14 17a8.969 8.969 0 015.72 0H6.14z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Manage Users</h3>
+                    <p class="text-gray-600">Edit info or delete all users (patients, doctors, admins).</p>
+                </a>
+                
+                <!-- NEW: View Patients Card -->
+                <a href="#admin-view-patients" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <!-- Heroicon: user-group -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-2.37M16 13.093l-3.5-2.188-3.5 2.188m0 0A2.5 2.5 0 115 10.5a2.5 2.5 0 015 0m0 0a2.5 2.5 0 115 0a2.5 2.5 0 01-5 0zM3 13.093l3.5-2.188 3.5 2.188m0 0A2.5 2.5 0 1111 10.5a2.5 2.5 0 01-5 0m0 0a2.5 2.5 0 11-5 0a2.5 2.5 0 015 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">View Patients</h3>
+                    <p class="text-gray-600">View a read-only list of all patients and their info.</p>
+                </a>
+                
+                <!-- NEW: View Doctors Card -->
+                <a href="#admin-view-doctors" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mb-4">
+                        <!-- Heroicon: briefcase -->
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">View Doctors</h3>
+                    <p class="text-gray-600">View a read-only list of all doctors and their info.</p>
+                </a>
+
+                <!-- View All Predictions Card -->
+                <a href="#admin-all-predictions" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                        <!-- Heroicon: clipboard-list -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">All Predictions</h3>
+                    <p class="text-gray-600">Review all prediction records from all patients.</p>
+                </a>
+
+                <!-- View All Appointments Card -->
+                <a href="#admin-all-appointments" class="dashboard-card bg-white p-6 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                        <!-- Heroicon: calendar (re-used) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">All Appointments</h3>
+                    <p class="text-gray-600">View all appointments between patients and doctors.</p>
+                </a>
+            </div>
+        </section>
+
+    <!-- ======================= -->
+        <!-- == ADMIN: MANAGE USERS == -->
+        <!-- ======================= -->
+        <section id="admin-manage-users" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#admin-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Admin Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">Manage All Users</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Full Name</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Email</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Role</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Details</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-table-body" class="text-gray-700">
+                            <!-- JS will populate this -->
+                            <tr><td colspan="5" class="text-center py-4">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- == NEW: ADMIN: VIEW PATIENTS == -->
+        <!-- ======================== -->
+        <section id="admin-view-patients" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#admin-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Admin Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Patients</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Full Name</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Email</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Age</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Gender</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-patients-table-body" class="text-gray-700">
+                            <!-- JS will populate this -->
+                            <tr><td colspan="5" class="text-center py-4">Loading patients...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- == NEW: ADMIN: VIEW DOCTORS == -->
+        <!-- ======================== -->
+        <section id="admin-view-doctors" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#admin-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Admin Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Doctors</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Full Name</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Email</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Specialization</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Experience</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-doctors-table-body" class="text-gray-700">
+                            <!-- JS will populate this -->
+                            <tr><td colspan="5" class="text-center py-4">Loading doctors...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =========================== -->
+        <!-- == ADMIN: ALL PREDICTIONS == -->
+        <!-- =========================== -->
+        <section id="admin-all-predictions" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#admin-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Admin Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All Patient Predictions</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Patient</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Result</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Probability</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Doctor's Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-predictions-table-body" class="text-gray-700">
+                            <!-- JS will populate this -->
+                            <tr><td colspan="5" class="text-center py-4">Loading predictions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================= -->
+        <!-- == ADMIN: ALL APPOINTMENTS == -->
+        <!-- ============================= -->
+        <section id="admin-all-appointments" class="page">
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <a href="#admin-dashboard" class="text-red-600 hover:text-red-800 mb-6 inline-block">&larr; Back to Admin Dashboard</a>
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">All System Appointments</h1>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Patient</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Doctor</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Date & Time</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Reason</th>
+                                <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-appointments-table-body" class="text-gray-700">
+                            <!-- JS will populate this -->
+                            <tr><td colspan="5" class="text-center py-4">Loading appointments...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODIFIED: ADMIN: EDIT USER MODAL (was edit-role-modal) -->
+        <div id="admin-edit-user-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 overflow-y-auto py-10">
+            <div class="bg-white p-8 rounded-lg shadow-xl max-w-lg w-full m-auto">
+                <h3 class="text-2xl font-bold mb-4">Edit User Information</h3>
+                <form id="admin-edit-user-form" class="space-y-4">
+                    <input type="hidden" id="edit-user-id">
+                    <input type="hidden" id="edit-user-role">
+                    
+                    <div>
+                        <label for="edit-user-fullname" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="edit-user-fullname" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div>
+                        <label for="edit-user-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="edit-user-email" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    
+                    <!-- Patient Fields -->
+                    <div id="edit-patient-fields" class="hidden space-y-4 pt-4 border-t">
+                        <h4 class="text-lg font-medium text-gray-800">Patient Details</h4>
+                        <div>
+                            <label for="edit-patient-age" class="block text-sm font-medium text-gray-700">Age</label>
+                            <input type="number" id="edit-patient-age" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div>
+                            <label for="edit-patient-gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select id="edit-patient-gender" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="edit-patient-phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                            <input type="tel" id="edit-patient-phone" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Doctor Fields -->
+                    <div id="edit-doctor-fields" class="hidden space-y-4 pt-4 border-t">
+                        <h4 class="text-lg font-medium text-gray-800">Doctor Details</h4>
+                         <div>
+                            <label for="edit-doctor-specialization" class="block text-sm font-medium text-gray-700">Specialization</LabeL>
+                            <input type="text" id="edit-doctor-specialization" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div>
+                            <label for="edit-doctor-experience" class="block text-sm font-medium text-gray-700">Experience (Years)</LabeL>
+                            <input type="number" id="edit-doctor-experience" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div>
+                            <label for="edit-doctor-clinic" class="block text-sm font-medium text-gray-700">Clinic Address</LabeL>
+                            <input type="text" id="edit-doctor-clinic" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500">
+                        </div>
+                    </div>
+
+                    <!-- Admin Fields -->
+                    <div id="edit-admin-fields" class="hidden space-y-4 pt-4 border-t">
+                        <h4 class="text-lg font-medium text-gray-800">Admin Account</h4>
+                        <p class="text-sm text-gray-500">Basic info (name, email) can be edited. To edit other admin-specific details, they must be added here.</p>
+                    </div>
+                    
+                    <!-- Password Update (Optional) -->
+                    <div class="pt-4 border-t">
+                         <label for="edit-user-password" class="block text-sm font-medium text-gray-700">New Password (Optional)</label>
+                         <input type="password" id="edit-user-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Leave blank to keep current password">
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-4">
+                        <button type="button" id="cancel-edit-user" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+                        <button type="submit" class="bg-red-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-red-700">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
 
     </main>
 

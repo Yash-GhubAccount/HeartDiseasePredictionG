@@ -22,70 +22,30 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["JWT_SECRET_KEY"] = "your-super-secret-key-change-me" # Change this in production!
 
 # --- Initialize Extensions ---
-db = SQLAlchemy(app)
+from models import db
+db.init_app(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+
+#after db initialization import model 
+from models import User, Patient, Doctor, Prediction, Recommendation, Appointment
+# --- IMPORT YOUR NEW DECORATORS ---
+from decorators import doctor_required 
+
+
+# ... after jwt = JWTManager(app) ...
+
+from functools import wraps
+
+# This admin_required is still here, but admin routes are now in admin_panel.py
+# This is okay, but we will use the one from decorators.py for consistency.
+# We've imported 'doctor_required' which is what we need.
+
 
 # --- 3. SERVE THE FRONTEND ---
 @app.route('/')
 def home():
     return render_template('index.html')
-
-# --- 2. DEFINE DATABASE MODELS ---
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(10), nullable=False) # 'patient' or 'doctor'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    patient_details = db.relationship('Patient', backref='user', uselist=False, cascade="all, delete-orphan")
-    doctor_details = db.relationship('Doctor', backref='user', uselist=False, cascade="all, delete-orphan")
-    predictions = db.relationship('Prediction', backref='user', lazy=True, cascade="all, delete-orphan")
-    # Relationships for appointments
-    patient_appointments = db.relationship('Appointment', foreign_keys='Appointment.patient_id', backref='patient', lazy=True)
-    doctor_appointments = db.relationship('Appointment', foreign_keys='Appointment.doctor_id', backref='doctor', lazy=True)
-
-
-class Patient(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    age = db.Column(db.Integer, nullable=True)
-    gender = db.Column(db.String(10), nullable=True)
-    phone = db.Column(db.String(20), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
-
-class Doctor(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    specialization = db.Column(db.String(100), nullable=True)
-    experience_years = db.Column(db.Integer, nullable=True)
-    clinic_address = db.Column(db.String(200), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
-
-class Prediction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    result = db.Column(db.String(10), nullable=False) # 'Yes' or 'No'
-    probability = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    input_data = db.Column(db.Text, nullable=False) # Store input features as JSON string
-    recommendations = db.relationship('Recommendation', backref='prediction', lazy=True, cascade="all, delete-orphan")
-    doctor_note = db.Column(db.Text, nullable=True) # To store doctor's private notes
-
-class Recommendation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(500), nullable=False)
-    prediction_id = db.Column(db.Integer, db.ForeignKey('prediction.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-# NEW: Appointment Model
-class Appointment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    appointment_datetime = db.Column(db.DateTime, nullable=False)
-    reason = db.Column(db.String(500), nullable=True)
-    status = db.Column(db.String(20), nullable=False, default='Pending') # Pending, Approved, Rejected
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 # --- 3. LOAD ML MODELS & THRESHOLDS ---
@@ -116,7 +76,13 @@ def register():
         new_patient = Patient(age=data.get('age'), gender=data.get('gender'), phone=data.get('phone'), user_id=new_user.id)
         db.session.add(new_patient)
     elif data['role'] == 'doctor':
-        new_doctor = Doctor(specialization=data.get('specialization'), experience_years=data.get('experience_years'), clinic_address=data.get('clinic_address'), user_id=new_user.id)
+        # --- FIX: Ensure all doctor fields are saved ---
+        new_doctor = Doctor(
+            specialization=data.get('specialization'), 
+            experience_years=data.get('experience_years'), 
+            clinic_address=data.get('clinic_address'), 
+            user_id=new_user.id
+        )
         db.session.add(new_doctor)
     db.session.commit()
     return jsonify({"message": "User registered successfully"}), 201
@@ -244,9 +210,9 @@ def get_history():
 @app.route('/api/recommendations', methods=['GET'])
 @jwt_required()
 def get_recommendations():
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
 
-    predictions = Prediction.query.filter_by(user_id=current_user).order_by(Prediction.timestamp.desc()).all()
+    predictions = Prediction.query.filter_by(user_id=current_user_id).order_by(Prediction.timestamp.desc()).all()
     output = []
 
     for pred in predictions:
@@ -378,15 +344,15 @@ def get_appointments():
     
 # --- DOCTOR: GET all appointments assigned to this doctor ---
 @app.route("/api/doctor/appointments", methods=["GET"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def get_doctor_appointments():
     try:
         doctor_id = int(get_jwt_identity())
         
-        # Security check: ensure the user is a doctor
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden: Not a doctor'}), 403
+        # --- REMOVED: No longer need manual role check ---
+        # user = User.query.filter_by(id=doctor_id, role='doctor').first()
+        # if not user:
+        #     return jsonify({'error': 'Access forbidden: Not a doctor'}), 403
 
         # Query appointments, joining with User to get patient's name
         appointments = db.session.query(
@@ -421,7 +387,7 @@ def get_doctor_appointments():
 
 # --- DOCTOR: Update an appointment's status (Approve/Reject) ---
 @app.route("/api/appointments/<int:appointment_id>", methods=["PUT"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def update_appointment_status(appointment_id):
     try:
         doctor_id = int(get_jwt_identity())
@@ -444,7 +410,7 @@ def update_appointment_status(appointment_id):
         appointment.status = new_status
         db.session.commit()
         
-        return jsonify({'message': f'Appointment {appointment_id} updated to {new_status}'}), 200
+        return jsonify({'message': f'Appointment status updated to {new_status}'}), 200
 
     except Exception as e:
         db.session.rollback()
@@ -453,16 +419,17 @@ def update_appointment_status(appointment_id):
     
 # --- DOCTOR: GET all patients ---
 @app.route("/api/doctor/patients", methods=["GET"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def get_all_patients():
     try:
-        # Security check: ensure user is a doctor
         doctor_id = int(get_jwt_identity())
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden'}), 403
+        
+        # --- REMOVED: No longer need manual role check ---
+        # user = User.query.filter_by(id=doctor_id, role='doctor').first()
+        # if not user:
+        #     return jsonify({'error': 'Access forbidden'}), 403
 
-        # Query all patients and their details
+        # NEW LOGIC: Query only patients with an appointment with this doctor
         patients = db.session.query(
             User.id,
             User.full_name,
@@ -470,10 +437,12 @@ def get_all_patients():
             Patient.gender,
             Patient.phone
         ).join(
-            Patient, User.id == Patient.user_id
+            Appointment, User.id == Appointment.patient_id  # Join User -> Appointment
+        ).join(
+            Patient, User.id == Patient.user_id          # Join User -> Patient
         ).filter(
-            User.role == 'patient'
-        ).order_by(
+            Appointment.doctor_id == doctor_id           # Filter appointments for THIS doctor
+        ).distinct(User.id).order_by(                    # Get unique patients
             User.full_name
         ).all()
 
@@ -495,14 +464,10 @@ def get_all_patients():
 
 # --- DOCTOR: GET prediction history for a specific patient ---
 @app.route("/api/doctor/patient_history/<int:patient_id>", methods=["GET"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def get_patient_history_for_doctor(patient_id):
     try:
-        # Security check: ensure user is a doctor
-        doctor_id = int(get_jwt_identity())
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden'}), 403
+        # --- REMOVED: No longer need manual role check ---
         
         # Check if patient exists
         patient = User.query.filter_by(id=patient_id, role='patient').first()
@@ -528,21 +493,17 @@ def get_patient_history_for_doctor(patient_id):
 
 # --- DOCTOR: GET full details of a single prediction ---
 @app.route("/api/doctor/prediction_details/<int:prediction_id>", methods=["GET"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def get_prediction_details(prediction_id):
     try:
-        # Security check: ensure user is a doctor
-        doctor_id = int(get_jwt_identity())
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden'}), 403
+        # --- REMOVED: No longer need manual role check ---
 
         # Find the prediction
         prediction = Prediction.query.get(prediction_id)
         if not prediction:
             return jsonify({'error': 'Prediction not found'}), 404
         
-        # NOTE: This is a basic check. A more secure app would also verify
+        # NOTE: A more secure app would also verify
         # that this doctor is somehow linked to this patient.
         
         return jsonify({
@@ -561,14 +522,10 @@ def get_prediction_details(prediction_id):
 
 # --- DOCTOR: Add/Update a note on a prediction ---
 @app.route("/api/doctor/prediction_note/<int:prediction_id>", methods=["PUT"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def add_doctor_note(prediction_id):
     try:
-        # Security check: ensure user is a doctor
-        doctor_id = int(get_jwt_identity())
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden'}), 403
+        # --- REMOVED: No longer need manual role check ---
 
         # Find the prediction
         prediction = Prediction.query.get(prediction_id)
@@ -592,14 +549,10 @@ def add_doctor_note(prediction_id):
     
 # --- DOCTOR: GET all predictions that have a doctor's note ---
 @app.route("/api/doctor/recommendations", methods=["GET"])
-@jwt_required()
+@doctor_required()  # <-- FIX: Use new decorator
 def get_all_recommendations():
     try:
-        # Security check: ensure user is a doctor
-        doctor_id = int(get_jwt_identity())
-        user = User.query.filter_by(id=doctor_id, role='doctor').first()
-        if not user:
-            return jsonify({'error': 'Access forbidden'}), 403
+        # --- REMOVED: No longer need manual role check ---
 
         # Query all predictions that have a non-empty doctor_note
         # and join with User to get the patient's name
@@ -635,6 +588,10 @@ def get_all_recommendations():
     except Exception as e:
         print(f"Get All Recommendations Error: {e}")
         return jsonify({'error': str(e)}), 500
+    
+# --- REGISTER ADMIN BLUEPRINT ---
+from admin_panel import admin_bp
+app.register_blueprint(admin_bp)
     
 # --- 7. RUN THE FLASK APP & DB SETUP COMMAND ---
 if __name__ == '__main__':

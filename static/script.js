@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const aboutLink = document.getElementById('about-link');
     const loginLink = document.getElementById('login-link');
     const registerLink = document.getElementById('register-link');
+    //admin panel new elements 
+    const publicNav = document.getElementById('nav-links');
+    const patientNav = document.getElementById('patient-nav-links');
+    const doctorNav = document.getElementById('doctor-nav-links');
+    const adminNav = document.getElementById('admin-nav-links');
+    // ...
     const userNavLinksContainer = document.getElementById('user-nav-links');
     const logoutButton = document.getElementById('logout-button');
     const notification = document.getElementById('notification');
@@ -552,11 +558,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
         // --- EXISTING LOGIC: Block pages if logged out ---
-        const protectedPages = ['patient-dashboard', 'doctor-dashboard', 'new-prediction', 'result', 'prediction-history', 'recommendations', 'appointments', 'view-predictions', 'patient-history-viewer', 'manage-recommendations', 'manage-appointments'];
-        if (!isLoggedIn && protectedPages.includes(targetId)) {
+        const protectedPages = [
+            'patient-dashboard', 'doctor-dashboard', 'new-prediction', 
+            'result', 'prediction-history', 'recommendations', 'appointments', 
+            'view-predictions', 'patient-history-viewer', 'manage-recommendations', 
+            'manage-appointments',
+            // --- ADD THESE ---
+            'admin-dashboard', 'admin-manage-users', 
+            'admin-all-predictions', 'admin-all-appointments',
+            'admin-view-patients', 'admin-view-doctors' // NEW
+        ];        if (!isLoggedIn && protectedPages.includes(targetId)) {
             LOG('[Auth] Redirecting to login - no token');
             window.location.hash = '#login'; 
             return;
+              
+     
         }
 
         // --- EXISTING LOGIC: Handle result page ---
@@ -607,6 +623,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetId === 'manage-recommendations') {
             fetchDoctorRecommendations();
         }
+        if (targetId === 'admin-manage-users') {
+            fetchAdminUsers();
+        }
+        if (targetId === 'admin-all-predictions') {
+            fetchAdminAllPredictions();
+        }
+        if (targetId === 'admin-all-appointments') {
+            fetchAdminAllAppointments();
+        }
+        if (targetId === 'admin-view-patients') {
+            fetchAdminPatients(); // NEW
+        }
+        if (targetId === 'admin-view-doctors') {
+            fetchAdminDoctors(); // NEW
+        }
 
         // Show the correct page
         pages.forEach(page => page.classList.toggle('active-page', page.id === targetId));
@@ -614,52 +645,55 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateUIForLoginState = () => {
-        const isLoggedIn = !!userState.token;
-        const linksToDisable = [homeLink, aboutLink, loginLink, registerLink];
+    const isLoggedIn = !!userState.token;
 
-        if (isLoggedIn) {
-            // State 2: Logged In
-            linksToDisable.forEach(link => {
-                if (link) {
-                    link.classList.add('disabled-link'); // Add the CSS class
-                    link.removeAttribute('href');       // Remove href to stop navigation
-                }
-            });
-            userNavLinksContainer.classList.remove('hidden'); // Show "Logout"
+    // Hide all navs first - using style.display to override Tailwind
+    if(publicNav) publicNav.style.display = 'none';
+    if(patientNav) patientNav.style.display = 'none';
+    if(doctorNav) doctorNav.style.display = 'none';
+    if(adminNav) adminNav.style.display = 'none';
+    if(userNavLinksContainer) userNavLinksContainer.style.display = 'none'; // logout button
+
+    if (isLoggedIn) {
+        // Show logout button
+        // The logout button is a simple div, so 'block' is fine.
+        if(userNavLinksContainer) userNavLinksContainer.style.display = 'block'; 
+        
+        // Show the correct nav based on role
+        // The nav containers are 'md:block' in the HTML, so they should be 'display: block'
+        if (userState.role === 'patient') {
+            if(patientNav) patientNav.style.display = 'block';
+        } else if (userState.role === 'doctor') {
+            if(doctorNav) doctorNav.style.display = 'block';
+        } else if (userState.role === 'admin') {
+            if(adminNav) adminNav.style.display = 'block';
         } else {
-            // State 1: Logged Out
-            linksToDisable.forEach(link => {
-                if (link) {
-                    link.classList.remove('disabled-link'); // Remove the CSS class
-                }
-            });
-            // Manually re-add hrefs
-            if (homeLink) homeLink.setAttribute('href', '#home');
-            if (aboutLink) aboutLink.setAttribute('href', '#about');
-            if (loginLink) loginLink.setAttribute('href', '#login');
-            if (registerLink) registerLink.setAttribute('href', '#register');
-            
-            userNavLinksContainer.classList.add('hidden'); // Hide "Logout"
+            // Fallback for unknown role (shouldn't happen, but good to have)
+            if(publicNav) publicNav.style.display = 'block';
         }
-    };
+    } else {
+        // Logged Out
+        if(publicNav) publicNav.style.display = 'block'; // Show public links
+    }
+};
 
     // --- SESSION MANAGEMENT ---
     const saveSession = (token, role) => {
         userState = { token, role };
-        localStorage.setItem('session', JSON.stringify(userState));
+        sessionStorage.setItem('session', JSON.stringify(userState));
         updateUIForLoginState();
     };
 
     const clearSession = () => {
         userState = { token: null, role: null };
-        localStorage.removeItem('session');
+        sessionStorage.removeItem('session');
         // Also clear prediction-related session storage on logout
         sessionStorage.clear();
         updateUIForLoginState();
     };
 
     const loadSession = () => {
-        const session = localStorage.getItem('session');
+        const session = sessionStorage.getItem('session');
         if (session) {
             userState = JSON.parse(session);
         }
@@ -750,6 +784,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- FORM SUBMISSIONS ---
+    const registerRole = document.getElementById('register-role');
+    const patientFields = document.getElementById('patient-fields');
+    const doctorFields = document.getElementById('doctor-fields');
+
+    if (registerRole) {
+        registerRole.addEventListener('change', (e) => {
+            if (e.target.value === 'doctor') {
+                if(patientFields) patientFields.classList.add('hidden');
+                if(doctorFields) doctorFields.classList.remove('hidden');
+            } else {
+                if(patientFields) patientFields.classList.remove('hidden');
+                if(doctorFields) doctorFields.classList.add('hidden');
+            }
+        });
+    }
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = registerForm.querySelector('button[type="submit"]');
@@ -790,7 +839,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(result.message || 'Login failed');
             saveSession(result.access_token, result.userRole);
             loginForm.reset();
-            window.location.hash = result.userRole === 'doctor' ? '#doctor-dashboard' : '#patient-dashboard';
+            // --- FIX: Added admin role redirect ---
+            if (result.userRole === 'admin') {
+                window.location.hash = '#admin-dashboard';
+            } else if (result.userRole === 'doctor') {
+                window.location.hash = '#doctor-dashboard';
+            } else {
+                window.location.hash = '#patient-dashboard';
+            }
+            // --- END FIX ---
         } catch (error) {
             showNotification(error.message);
         } finally {
@@ -1009,7 +1066,349 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+    //adim api calls
+    // ... before the final });
+
+// --- ================== ---
+// --- ADMIN API CALLS ---
+// --- ================== ---
+
+const fetchAdminUsers = async () => {
+    if (!userState.token) return;
+    const tableBody = document.getElementById('admin-users-table-body');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading users...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/users`, {
+            headers: { 'Authorization': `Bearer ${userState.token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch users');
+
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No users found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = data.map(user => `
+            <tr class="border-b">
+                <td class="py-3 px-4 font-medium">${user.full_name}</td>
+                <td class="py-3 px-4">${user.email}</td>
+                <td class="py-3 px-4">${user.role}</td>
+                <td class="py-3 px-4 text-sm">
+                    ${user.details.age ? `Age: ${user.details.age}` : ''}
+                    ${user.details.specialization ? `${user.details.specialization}` : ''}
+                </td>
+                <td class="py-3 px-4">
+                    <button class="edit-user-btn bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600" 
+                                data-id="${user.id}">Edit Info</button>
+                    <button class="delete-user-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 ml-2" 
+                                data-id="${user.id}" 
+                                data-name="${user.full_name}">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        showNotification(error.message);
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Could not load users.</td></tr>';
+    }
+};
+
+// --- NEW: fetchAdminPatients ---
+    const fetchAdminPatients = async () => {
+        if (!userState.token) return;
+        const tableBody = document.getElementById('admin-patients-table-body');
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading patients...</td></tr>';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/patients`, {
+                headers: { 'Authorization': `Bearer ${userState.token}` }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to fetch patients');
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No patients found.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = data.map(p => `
+                <tr class="border-b">
+                    <td class="py-3 px-4 font-medium">${p.full_name}</td>
+                    <td class="py-3 px-4">${p.email}</td>
+                    <td class="py-3 px-4">${p.age || 'N/A'}</td>
+                    <td class="py-3 px-4">${p.gender || 'N/A'}</td>
+                    <td class="py-3 px-4">${p.phone || 'N/A'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            showNotification(error.message);
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Could not load patients.</td></tr>';
+        }
+    };
+    
+    // --- NEW: fetchAdminDoctors ---
+    const fetchAdminDoctors = async () => {
+        if (!userState.token) return;
+        const tableBody = document.getElementById('admin-doctors-table-body');
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading doctors...</td></tr>';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/doctors`, {
+                headers: { 'Authorization': `Bearer ${userState.token}` }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to fetch doctors');
+
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No doctors found.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = data.map(d => `
+                <tr class="border-b">
+                    <td class="py-3 px-4 font-medium">${d.full_name}</td>
+                    <td class="py-3 px-4">${d.email}</td>
+                    <td class="py-3 px-4">${d.specialization || 'N/A'}</td>
+                    <td class="py-3 px-4">${d.experience_years || 'N/A'}</td>
+                    <td class="py-3 px-4">${d.clinic_address || 'N/A'}</td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            showNotification(error.message);
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Could not load doctors.</td></tr>';
+        }
+    };
+
+const fetchAdminAllPredictions = async () => {
+    if (!userState.token) return;
+    const tableBody = document.getElementById('admin-predictions-table-body');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading predictions...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/predictions`, {
+            headers: { 'Authorization': `Bearer ${userState.token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch predictions');
+
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No predictions found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = data.map(pred => `
+            <tr class="border-b">
+                <td class="py-3 px-4 font-medium">${pred.patient_name}</td>
+                <td class="py-3 px-4">${pred.timestamp}</td>
+                <td class="py-3 px-4 font-semibold ${pred.result === 'Yes' ? 'text-red-600' : 'text-green-600'}">${pred.result}</td>
+                <td class="py-3 px-4">${pred.probability}</td>
+                <td class="py-3 px-4">${pred.doctor_note || 'N/A'}</td>
+            </tr>
+        `).join('');
+
+    } catch (error){ 
+        showNotification(error.message); 
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Could not load predictions.</td></tr>'; 
+    } 
+};
+
+const fetchAdminAllAppointments = async () => {
+    if (!userState.token) return;
+    const tableBody = document.getElementById('admin-appointments-table-body');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading appointments...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/appointments`, {
+            headers: { 'Authorization': `Bearer ${userState.token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch appointments');
+
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No appointments found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = data.map(appt => `
+            <tr class="border-b">
+                <td class="py-3 px-4">${appt.patient_name}</td>
+                <td class="py-3 px-4">${appt.doctor_name}</td>
+                <td class="py-3 px-4">${appt.datetime}</td>
+                <td class="py-3 px-4">${appt.reason || 'N/A'}</td>
+                <td class="py-3 px-4 font-medium ${appt.status === 'Pending' ? 'text-yellow-600' : (appt.status === 'Approved' ? 'text-green-600' : 'text-red-600')}">${appt.status}</td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        showNotification(error.message);
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-600">Could not load appointments.</td></tr>';
+    }
+};
+
+// --- ADMIN EVENT LISTENERS ---
+
+// --- MODIFIED: Modal helpers for new Edit User Modal ---
+    const editUserModal = document.getElementById('admin-edit-user-modal');
+    const editUserForm = document.getElementById('admin-edit-user-form');
+    const cancelEditUserBtn = document.getElementById('cancel-edit-user');
+    
+    const editPatientFields = document.getElementById('edit-patient-fields');
+    const editDoctorFields = document.getElementById('edit-doctor-fields');
+    const editAdminFields = document.getElementById('edit-admin-fields');
+
+    const showEditUserModal = async (userId) => {
+        // Reset form
+        editUserForm.reset();
+        editPatientFields.classList.add('hidden');
+        editDoctorFields.classList.add('hidden');
+        editAdminFields.classList.add('hidden');
+        
+        try {
+            // Fetch the user's full details
+            const response = await fetch(`${API_BASE_URL}/admin/user/${userId}`, {
+                headers: { 'Authorization': `Bearer ${userState.token}` }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to fetch user details');
+            
+            // Populate common fields
+            document.getElementById('edit-user-id').value = data.id;
+            document.getElementById('edit-user-role').value = data.role;
+            document.getElementById('edit-user-fullname').value = data.full_name;
+            document.getElementById('edit-user-email').value = data.email;
+            
+            // Populate role-specific fields
+            if (data.role === 'patient') {
+                document.getElementById('edit-patient-age').value = data.age || '';
+                document.getElementById('edit-patient-gender').value = data.gender || 'Male';
+                document.getElementById('edit-patient-phone').value = data.phone || '';
+                editPatientFields.classList.remove('hidden');
+            } else if (data.role === 'doctor') {
+                document.getElementById('edit-doctor-specialization').value = data.specialization || '';
+                document.getElementById('edit-doctor-experience').value = data.experience_years || '';
+                document.getElementById('edit-doctor-clinic').value = data.clinic_address || '';
+                editDoctorFields.classList.remove('hidden');
+            } else if (data.role === 'admin') {
+                editAdminFields.classList.remove('hidden');
+            }
+            
+            editUserModal.classList.remove('hidden');
+            
+        } catch (error) {
+            showNotification(error.message);
+        }
+    };
+    
+    const hideEditUserModal = () => {
+        editUserModal.classList.add('hidden');
+    };
+
+    if(cancelEditUserBtn) {
+        cancelEditUserBtn.addEventListener('click', hideEditUserModal);
+    }
+
+    // --- MODIFIED: Form submit listener for new Edit User Modal ---
+    if(editUserForm) {
+        editUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('edit-user-id').value;
+            const role = document.getElementById('edit-user-role').value;
+            const btn = editUserForm.querySelector('button[type="submit"]');
+            
+            // Collect all data
+            let dataToUpdate = {
+                full_name: document.getElementById('edit-user-fullname').value,
+                email: document.getElementById('edit-user-email').value,
+            };
+
+            const password = document.getElementById('edit-user-password').value;
+            if (password) {
+                dataToUpdate.password = password;
+            }
+            
+            if (role === 'patient') {
+                dataToUpdate.age = document.getElementById('edit-patient-age').value;
+                dataToUpdate.gender = document.getElementById('edit-patient-gender').value;
+                dataToUpdate.phone = document.getElementById('edit-patient-phone').value;
+            } else if (role === 'doctor') {
+                dataToUpdate.specialization = document.getElementById('edit-doctor-specialization').value;
+                dataToUpdate.experience_years = document.getElementById('edit-doctor-experience').value;
+                dataToUpdate.clinic_address = document.getElementById('edit-doctor-clinic').value;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/user/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userState.token}`
+                    },
+                    body: JSON.stringify(dataToUpdate)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Failed to update user');
+                
+                showNotification('User updated!', 'success');
+                hideEditUserModal();
+                fetchAdminUsers(); // Refresh the user list
+                
+            } catch (error) {
+                showNotification(error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        });
+    }
+
+    // --- MODIFIED: Event listener for "Manage Users" table ---
+    const userTableBody = document.getElementById('admin-users-table-body');
+    if(userTableBody) {
+        userTableBody.addEventListener('click', async (e) => {
+            const target = e.target;
+            
+            // Handle Edit Button
+            if (target.classList.contains('edit-user-btn')) {
+                const id = target.dataset.id;
+                showEditUserModal(id); // NEW function call
+            }
+            
+            // Handle Delete Button
+            if (target.classList.contains('delete-user-btn')) {
+                const id = target.dataset.id;
+                const name = target.dataset.name;
+                
+                if (confirm(`Are you sure you want to delete ${name}? This action is permanent and will delete all their associated data.`)) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${userState.token}` }
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || 'Failed to delete user');
+                        
+                        showNotification('User deleted successfully!', 'success');
+                        fetchAdminUsers(); // Refresh the list
+                    } catch (error) {
+                        showNotification(error.message);
+                    }
+                }
+            }
+        });
+    }
+
     // --- INITIALIZATION ---
     loadSession();
     showPage(window.location.hash || '#home');
+
+
+
+    
 });
